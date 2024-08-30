@@ -66,7 +66,7 @@ void __attribute__((visibility("hidden"))) dircat(char *absolute, char *parent, 
 #ifdef __ANDROID__
   //In case of android
   #define _DEBUG_LOG
-  #define _LOG_DIR "/data/data/"
+  #define _LOG_DIR "/storage/emulated/0/Android/data/"
   int __attribute__((visibility("hidden"))) getAppID(char *_ID);
   int __attribute__((visibility("hidden"))) LogOutput();
 
