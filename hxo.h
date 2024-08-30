@@ -198,7 +198,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         free(confparam);
         return (void*)1;
     }
-    printf("Got ID: %s", androidParam->ID);
+    printf("[+] Got ID: %s\n", androidParam->ID);
 
     //Parse ini file
     if(ini_parse(entParam->iniFile, fn_ini_handler, confparam) < 0)
@@ -209,7 +209,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     //Setup additional android parameters
     dircat(androidParam->rootDataPath, "/data/data/", androidParam->ID);
     dircat(androidParam->AndroidDataPath, "/storage/emulated/0/Android/data/", androidParam->ID);
-    printf("androidParam->rootDataPath: %s\nandroidParam->AndroidDataPath: %s", androidParam->rootDataPath, androidParam->AndroidDataPath);
+    printf("\nandroidParam->rootDataPath: %s\nandroidParam->AndroidDataPath: %s\n", androidParam->rootDataPath, androidParam->AndroidDataPath);
 
   after_parsing:
 
@@ -535,13 +535,13 @@ int __attribute__((visibility("hidden"))) LogOutput()
 int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *destination_file) {
     FILE *source = fopen(source_file, "rb");
     if (source == NULL) {
-        fprintf(stderr, "CopyFile failed: Could not open source file '%s'\n", source_file);
+        fprintf(stderr, "[!] CopyFile failed: Could not open source file '%s'\n", source_file);
         return 1;
     }
 
     FILE *destination = fopen(destination_file, "wb");
     if (destination == NULL) {
-        fprintf(stderr, "CopyFile failed: Could not open destination file '%s'\n", destination_file);
+        fprintf(stderr, "[!] CopyFile failed: Could not open destination file '%s'\n", destination_file);
         fclose(source);
         return 1;
     }
@@ -551,7 +551,7 @@ int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *dest
 
     while ((bytes_read = fread(buffer, 1, sizeof(buffer), source)) > 0) {
         if (fwrite(buffer, 1, bytes_read, destination) != bytes_read) {
-            fprintf(stderr, "CopyFile failed: Error writing to destination file '%s'\n", destination_file);
+            fprintf(stderr, "[!] CopyFile failed: Error writing to destination file '%s'\n", destination_file);
             fclose(source);
             fclose(destination);
             return 1;
@@ -559,7 +559,7 @@ int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *dest
     }
 
     if (ferror(source)) {
-        fprintf(stderr, "CopyFile failed: Error reading from source file '%s'\n", source_file);
+        fprintf(stderr, "[!] CopyFile failed: Error reading from source file '%s'\n", source_file);
         fclose(source);
         fclose(destination);
         return 1;
