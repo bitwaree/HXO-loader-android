@@ -493,20 +493,15 @@ int __attribute__((visibility("hidden"))) LogOutput()
     char _debugAppID[512];
     getAppID(_debugAppID);
 
-    char LogDir[1024];
-    char stdoutLogFile[1024];
-    char stderrLogFile[1024];
-    strcpy(LogDir, "/data/data/");
-    strcat(LogDir, _debugAppID);
-    fixDIR(LogDir);
-    strcpy(stdoutLogFile, LogDir);
-    strcpy(stderrLogFile, LogDir);
+    char outLogFile[1024];
+    strcpy(outLogFile, "/data/data/");
+    strcat(outLogFile, _debugAppID);
+    fixDIR(outLogFile);
+
+    strcat(outLogFile, "hxo_log.txt");
     
-    strcat(stdoutLogFile, "hxo_log.txt");
-    strcat(stderrLogFile, "hxo_log.txt");
-    
-    if ( !freopen(stdoutLogFile, "a", stderr) &&
-        !freopen(stderrLogFile, "a", stdout) )
+    if ( !freopen(outLogFile, "a", stdout) &&
+        !freopen(outLogFile, "a", stderr) )
     {
         return 1;
     }
@@ -521,7 +516,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
     fprintf(stderr, "This is an error message.\n");
     printf("\n\n\n------->START LOG<----------\n\n");
    /*
-    int out_fd = open(stdoutLogFile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    int out_fd = open(outLogFile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
     if (out_fd == -1) {
         perror("Failed to open file");
