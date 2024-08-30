@@ -539,7 +539,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
     // Convert to local time format
     struct tm *local_time = localtime(&current_time);
     */
-    printf("\n\n\n---------->START LOG<----------\n\n", );
+    printf("\n\n\n---------->START LOG<----------\n\n");
     // Close the original file descriptors
     close(out_fd);
     
