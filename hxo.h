@@ -496,8 +496,8 @@ int __attribute__((visibility("hidden"))) LogOutput()
     strcat(stdoutLogFile, "hxo_log.txt");
     strcat(stderrLogFile, "hxo_log.txt");
     
-    if ( !freopen(stdoutLogFile, "a", stdout) &&
-        !freopen(stderrLogFile, "a", stderr) )
+    if ( !freopen(stdoutLogFile, "a", stderr) &&
+        !freopen(stderrLogFile, "a", stdout) )
     {
         return 1;
     }
