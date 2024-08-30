@@ -66,9 +66,10 @@ void __attribute__((visibility("hidden"))) dircat(char *absolute, char *parent, 
 #ifdef __ANDROID__
   //In case of android
   #define _DEBUG_LOG
-
+  #define _LOG_DIR "/data/data/"
   int __attribute__((visibility("hidden"))) getAppID(char *_ID);
   int __attribute__((visibility("hidden"))) LogOutput();
+
   #define DEFAULT_LIB_DIR "/storage/emulated/0/hxo/"
 
 #else
@@ -174,7 +175,7 @@ int __attribute__((visibility("hidden"))) fn_ini_handler(void *user, const char 
 void __attribute__((visibility("hidden"))) *hxo_loader()
 {
   #ifdef _DEBUG_LOG
-    LogOutput();
+    int out_fd = LogOutput();
   #endif
 
   #ifdef CPRS_SHOW_ALWAYS
@@ -269,9 +270,10 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
-        fclose(stderr);
-        fclose(stdout);
+        close(out_fd);
       #endif
+        free(entParam);
+        free(confparam);
         return (void*)1;
     }
   #endif //__ANDROID__
@@ -286,8 +288,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
-        fclose(stderr);
-        fclose(stdout);
+        fclose(out_fd);
       #endif
         return (void*)1;
     }
@@ -318,8 +319,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
-        fclose(stderr);
-        fclose(stdout);
+        fclose(out_fd);
       #endif
         return (void*)1;
     }
@@ -405,8 +405,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
-        fclose(stderr);
-        fclose(stdout);
+        fclose(out_fd);
       #endif
     return (void*)0;
 }
@@ -494,7 +493,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
     getAppID(_debugAppID);
 
     char outLogFile[1024];
-    strcpy(outLogFile, "/data/data/");
+    strcpy(outLogFile, _LOG_DIR);
     strcat(outLogFile, _debugAppID);
     fixDIR(outLogFile);
 
@@ -527,22 +526,10 @@ int __attribute__((visibility("hidden"))) LogOutput()
         return 1;
     }
 
-    //test strings
-    // Write to stdout and stderr
-    printf("This is a normal message.\n");
-    fprintf(stderr, "This is an error message.\n");
-    /*
-    // Get the current time
-    time_t current_time;
-    time(&current_time);
-
-    // Convert to local time format
-    struct tm *local_time = localtime(&current_time);
-    */
     printf("\n\n\n---------->START LOG<----------\n\n");
     // Close the original file descriptors
-    close(out_fd);
+    //close(out_fd);
     
-    return 0;
+    return out_fd;
 }
 #endif
