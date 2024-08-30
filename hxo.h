@@ -46,16 +46,21 @@ void __attribute__((visibility("hidden"))) *hxo_loader();
 int __attribute__((visibility("hidden"))) GetExePath(char *directory);
 void __attribute__((visibility("hidden"))) fixDIR(char *Dir);
 void __attribute__((visibility("hidden"))) dircat(char *absolute, char *parent, char *child);
-
+int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *destination_file);
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
-#include <dlfcn.h>
+
 //#include "loader.h"
 #include "ini.h"
 #include <libgen.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dlfcn.h>
 
 // Defined constants
 #define MAX_LIBS 100
@@ -65,16 +70,24 @@ void __attribute__((visibility("hidden"))) dircat(char *absolute, char *parent, 
 
 #ifdef __ANDROID__
   //In case of android
-  #define _DEBUG_LOG
-  #define _LOG_DIR "/storage/emulated/0/Android/data/"
-  int __attribute__((visibility("hidden"))) getAppID(char *_ID);
-  int __attribute__((visibility("hidden"))) LogOutput();
-
-  #define DEFAULT_LIB_DIR "/storage/emulated/0/hxo/"
+  #define _DEBUG_LOG            //Comment if you don't wanna store logs in a file
+  #define _LOG_DIR "/storage/emulated/0/Android/data/"              //Where hxo_log.txt file will be stored
+  #define DEFAULT_INI_DIR "/storage/emulated/0/hxo/"                //where HXO.ini will be stored
+  #define DEFAULT_LIB_DIR "/storage/emulated/0/hxo/"                //Where hxo_loader.so is placed
+  #define PARENT_HXO_DIR "/storage/emulated/0/Android/data/"        //Parent directory of <id>/scripts
+  int __attribute__((visibility("hidden"))) getAppID(char *_ID);    //Fetches app id eg:<com.example.app>
+  int __attribute__((visibility("hidden"))) LogOutput();            //Starts the logging
+  
+  struct AndroidParam
+  {
+    char ID[512];                   //App ID
+    char AndroidDataPath[1024];     //equvalent to /sdcard/data/<id>/
+    char rootDataPath[1024];        //equvalent to /data/data/<id>/
+  };
 
 #else
   //if not android
-  #define DEFAULT_LIB_DIR "/usr/lib"
+  #define DEFAULT_LIB_DIR "/usr/lib"                               //Where hxo_loader.so is placed
 
 #endif //__ANDROID__
 #define DEFAULT_HXO_DIR "./scripts/"
@@ -102,35 +115,7 @@ struct internalParam
     char iniFile[2048];   //(Absolute path) Path of iniFile 
     char hxo_dir[2048];   //(Absolute path) Where .hxo files lives 
 };
-/*
-;INI struct
-[HXO]
-hxo=1
-hxo_dir=./scripts
-sleep=0
-UnloadAfterExecution=0
 
-[1337]
-lib=/usr/lib/hxo
-EP=_init_hxo
-*/
-
-//hook snippet
-/*
-    //loader code start
-    static int callnum = 0;
-    if(!callnum)
-    {
-        callnum = ~callnum;
-        pthread_attr_t ptattr;
-        size_t _stacksize = 4 * 1024 * 1024; // 4MB stack size
-
-        pthread_attr_init(&ptattr);
-        pthread_attr_setstacksize(&ptattr, _stacksize);
-        pthread_t loader_thread;
-        pthread_create(&loader_thread, &ptattr, (void*(*)(void*))hxo_loader, 0);
-    }
-*/
 int __attribute__((visibility("hidden"))) fn_ini_handler(void *user, const char *section, const char *name, const char *value)
 {
 
@@ -258,24 +243,36 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     }
   #else
     //in case of android
-    strcpy(entParam->ini_dir, DEFAULT_LIB_DIR);
+    struct AndroidParam *androidParam = malloc(sizeof(struct AndroidParam));
+
+    strcpy(entParam->ini_dir, DEFAULT_INI_DIR);
     fixDIR(entParam->ini_dir);
     dircat(entParam->iniFile, entParam->ini_dir, CONFIGFILE);
-    if(ini_parse(entParam->iniFile, fn_ini_handler, confparam) < 0)
-    {
-        perror("[!] WARNING: unable to parse \'HXO.ini\'");
-    }
-    if(!getAppID(confparam->hxo_dir))
+    //Default parameters
+    if(!getAppID(androidParam->ID))
     {
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
         close(out_fd);
       #endif
+      #ifdef __ANDROID__
+        free(androidParam);
+      #endif
         free(entParam);
         free(confparam);
         return (void*)1;
     }
+
+    //Parse ini file
+    if(ini_parse(entParam->iniFile, fn_ini_handler, confparam) < 0)
+    {
+        perror("[!] WARNING: unable to parse \'HXO.ini\'");
+    }
+
+    //Setup additional android parameters
+    dircat(androidParam->rootDataPath, "/data/data/", androidParam->ID);
+    dircat(androidParam->AndroidDataPath, "/storage/emulated/0/Android/data/", androidParam->ID);
   #endif //__ANDROID__
 
   after_parsing:
@@ -285,6 +282,9 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     {
         free(entParam);
         free(confparam);
+      #ifdef __ANDROID__
+        free(androidParam);
+      #endif
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
@@ -293,7 +293,13 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         return (void*)1;
     }
     //setup parameters
+  #ifdef __ANDROID__
+    dircat(entParam->hxo_dir, androidParam->AndroidDataPath, confparam->hxo_dir);
+    char new_hxo_dir[512];
+    dircat(new_hxo_dir, androidParam->rootDataPath, "cache/hxo/");
+  #else
     dircat(entParam->hxo_dir, entParam->ini_dir, confparam->hxo_dir);
+  #endif
     //Add a slash to avoid directory issues
     fixDIR(entParam->hxo_dir);
 
@@ -316,6 +322,9 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         fprintf(stderr, "[X] ERROR: Can't open hxo directory \"%s\".\n", confparam->hxo_dir);
         free(entParam);
         free(confparam);
+      #ifdef __ANDROID__
+        free(androidParam);
+      #endif
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
@@ -349,6 +358,36 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     char current_filename[2048];
     void *dlhandle;
     void *(*init_func)(void *);
+  #ifdef __ANDROID__
+    //copy files to the tmp folder
+    //folder: /data/data/<APP_ID>/tmp/hxo/
+    if (mkdir(new_hxo_dir, 0777) == -1)
+    {
+      if(errno != EEXIST)
+      {
+          free(confparam);
+          free(entParam);
+          free(androidParam);
+    // exit
+        #ifdef _DEBUG_LOG
+          fflush(stdout);
+          fflush(stderr);
+          close(out_fd);
+        #endif
+          return (void*)0;
+      }
+    }
+
+    char new_filename[2048];
+    for (int i = 0; i < count; i++)
+    {
+        dircat(current_filename, entParam->hxo_dir, files[i]);
+        dircat(new_filename, new_hxo_dir, files[i]);
+        CopyFile(current_filename, new_filename);
+    }
+    strcpy(entParam->hxo_dir, new_hxo_dir);
+  #endif //__ANDROID__
+
 
     for (int i = 0; i < count; i++)
     {
@@ -401,6 +440,9 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     }
     free(confparam);
     free(entParam);
+      #ifdef __ANDROID__
+        free(androidParam);
+      #endif
     // exit
       #ifdef _DEBUG_LOG
         fflush(stdout);
@@ -533,3 +575,33 @@ int __attribute__((visibility("hidden"))) LogOutput()
     return out_fd;
 }
 #endif
+
+int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *destination_file)
+{
+    FILE *source = fopen(source_file, "rb");
+    if (source == NULL) {
+        fprintf(stderr, "CopyFile failed: Could not open source file\n");
+        return 1;
+    }
+
+    FILE *destination = fopen(destination_file, "wb");
+    if (destination == NULL) {
+        fprintf(stderr, "CopyFile failed: Could not open destination file\n");
+        fclose(source);
+        return 1;
+    }
+
+    char *buffer = malloc((size_t)ftell(source));
+    size_t bytes_read;
+
+    while ((bytes_read = fread(buffer, 1, 1024, source)) > 0) {
+        fwrite(buffer, 1, bytes_read, destination);
+    }
+
+    fclose(source);
+    fclose(destination);
+
+    free(buffer);
+
+    return 0;
+}
