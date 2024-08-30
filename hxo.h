@@ -473,7 +473,8 @@ int __attribute__((visibility("hidden"))) LogOutput()
     strcat(LogFile, _debugAppID);
     fixDIR(LogFile);
     strcat(LogFile, "hxo_log.txt");
-    if ( !freopen(LogFile, "a", stderr) &&
+
+    if ( !freopen(LogFile, "w", stderr) &&
         !freopen(LogFile, "a", stdout) )
     {
         return 1;
