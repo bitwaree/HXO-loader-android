@@ -489,6 +489,7 @@ int __attribute__((visibility("hidden"))) getAppID(char *_ID)
 }
 int __attribute__((visibility("hidden"))) LogOutput()
 {
+    /*
     char _debugAppID[512];
     getAppID(_debugAppID);
 
@@ -516,8 +517,32 @@ int __attribute__((visibility("hidden"))) LogOutput()
 
     // // Convert to local time format
     // struct tm *local_time = localtime(&current_time);
-    
+    */
+    int out_fd = open("hxo_log.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+    if (out_fd == -1) {
+        perror("Failed to open file");
+        return 1;
+    }
+
+    // Duplicate the file descriptor to stdout and stderr
+    if (dup2(out_fd, STDOUT_FILENO) == -1) {
+        perror("Failed to redirect stdout");
+        return 1;
+    }
+
+    if (dup2(out_fd, STDERR_FILENO) == -1) {
+        perror("Failed to redirect stderr");
+        return 1;
+    }
+
+    // Write to stdout and stderr
+    printf("This is a normal message.\n");
+    fprintf(stderr, "This is an error message.\n");
     printf("\n\n\n------->START LOG<----------\n\n");
+    // Close the original file descriptors
+    close(out_fd);
+    
     return 0;
 }
 #endif
