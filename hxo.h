@@ -267,6 +267,8 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     if(!getAppID(confparam->hxo_dir))
     {
       #ifdef _DEBUG_LOG
+        fflush(stdout);
+        fflush(stderr);
         fclose(stderr);
         fclose(stdout);
       #endif
@@ -282,6 +284,8 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         free(entParam);
         free(confparam);
       #ifdef _DEBUG_LOG
+        fflush(stdout);
+        fflush(stderr);
         fclose(stderr);
         fclose(stdout);
       #endif
@@ -312,6 +316,8 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         free(entParam);
         free(confparam);
       #ifdef _DEBUG_LOG
+        fflush(stdout);
+        fflush(stderr);
         fclose(stderr);
         fclose(stdout);
       #endif
@@ -397,6 +403,8 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     free(entParam);
     // exit
       #ifdef _DEBUG_LOG
+        fflush(stdout);
+        fflush(stderr);
         fclose(stderr);
         fclose(stdout);
       #endif
