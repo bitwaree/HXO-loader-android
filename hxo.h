@@ -69,27 +69,23 @@ int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *dest
 #define __ANDROID__
 
 #ifdef __ANDROID__
-  //In case of android
-  #define _DEBUG_LOG            //Comment if you don't wanna store logs in a file
-  #define _LOG_DIR "/storage/emulated/0/Android/data/"              //Where hxo_log.txt file will be stored
-  #define DEFAULT_INI_DIR "/storage/emulated/0/hxo/"                //where HXO.ini will be stored
-  #define DEFAULT_LIB_DIR "/storage/emulated/0/hxo/"                //Where hxo_loader.so is placed
-  #define PARENT_HXO_DIR "/storage/emulated/0/Android/data/"        //Parent directory of <id>/scripts
-  int __attribute__((visibility("hidden"))) getAppID(char *_ID);    //Fetches app id eg:<com.example.app>
-  int __attribute__((visibility("hidden"))) LogOutput();            //Starts the logging
+    //In case of android
+    #define _DEBUG_LOG            //Comment if you don't wanna store logs in a file
+    #define _LOG_DIR "/storage/emulated/0/Android/data/"              //Where hxo_log.txt file will be stored
+    #define DEFAULT_INI_DIR "/storage/emulated/0/hxo/"                //where HXO.ini will be stored
+    #define DEFAULT_LIB_DIR "/storage/emulated/0/hxo/"                //Where hxo_loader.so is placed
+    #define PARENT_HXO_DIR "/storage/emulated/0/Android/data/"        //Parent directory of <id>/scripts
+    int __attribute__((visibility("hidden"))) getAppID(char *_ID);    //Fetches app id eg:<com.example.app>
+    int __attribute__((visibility("hidden"))) LogOutput();            //Starts the logging
   
-  struct AndroidParam
-  {
-    char ID[512];                   //App ID
-    char AndroidDataPath[1024];     //equvalent to /sdcard/data/<id>/
-    char rootDataPath[1024];        //equvalent to /data/data/<id>/
-  };
-
-#else
-  //if not android
-  #define DEFAULT_LIB_DIR "/usr/lib"                               //Where hxo_loader.so is placed
-
+    struct AndroidParam
+    {
+        char ID[512];                   //App ID
+        char AndroidDataPath[1024];     //equvalent to /sdcard/data/<id>/
+        char rootDataPath[1024];        //equvalent to /data/data/<id>/
+    };
 #endif //__ANDROID__
+
 #define DEFAULT_HXO_DIR "./scripts/"
 #define CONFIGFILE "HXO.ini"
 
@@ -180,68 +176,6 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     confparam->hideBanner = 0;
     confparam->hideCPRstring = 0;
 
-#ifndef __ANDROID__
-    // fetch current working directory
-    if (getcwd(entParam->cwd, 2048) == NULL) 
-    {
-        perror("[!] WARNING: Can't retrive current working directory!");
-        *entParam->cwd = (unsigned char) 0;
-    }
-    //fetch exe path
-    if(!GetExePath(entParam->exedir))
-    {
-        perror("[X] ERROR: Can't retrive current executable path! \n");
-        *entParam->exedir = (unsigned char) 0;
-    }
-
-    //INI persing priority:
-    //FIRST: look for current woking directory
-    //SEC:   look for Executable path
-    if(*entParam->cwd == 0 && *entParam->exedir==0)
-    {
-      _exit_at_init:
-        //If nothing found... (atleast one is needed to continue)
-        free(entParam);
-        free(confparam);
-        return (void*)1;
-    }
-
-    if(*entParam->cwd != 0)
-    {
-        dircat(entParam->iniFile, entParam->cwd, CONFIGFILE);
-        if(!(ini_parse(entParam->iniFile, fn_ini_handler, confparam) < 0))
-        {
-            //Successfully parsed ini from current working directory
-            strcpy(entParam->ini_dir, entParam->cwd);
-            fixDIR(entParam->ini_dir);
-            goto after_parsing;
-        }
-    }
-    
-    if (*entParam->exedir != 0) 
-    {
-        dircat(entParam->iniFile, entParam->exedir, CONFIGFILE);
-        if(!(ini_parse(entParam->iniFile, fn_ini_handler, confparam) < 0))
-        {
-            //Successfully parsed ini from executable directory
-            strcpy(entParam->ini_dir, entParam->exedir);
-            fixDIR(entParam->ini_dir);
-            goto after_parsing;
-        }
-        else
-        {
-            //Assume all parameter as per default values
-            perror("[!] WARNING: unable to parse \'HXO.ini\'");
-            strcpy(entParam->ini_dir, entParam->exedir);
-            fixDIR(entParam->ini_dir);
-            goto after_parsing;
-        }
-    }
-    else
-    {
-        goto _exit_at_init;
-    }
-#else
     //in case of android
     struct AndroidParam *androidParam = malloc(sizeof(struct AndroidParam));
 
@@ -251,6 +185,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     //Default parameters
     if(!getAppID(androidParam->ID))
     {
+        fprintf(stderr,"Unable to fetch ID...");
     #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
@@ -275,7 +210,6 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     dircat(androidParam->rootDataPath, "/data/data/", androidParam->ID);
     dircat(androidParam->AndroidDataPath, "/storage/emulated/0/Android/data/", androidParam->ID);
     printf("androidParam->rootDataPath: %s\nandroidParam->AndroidDataPath: %s", androidParam->rootDataPath, androidParam->AndroidDataPath);
-  #endif //__ANDROID__
 
   after_parsing:
 
@@ -295,15 +229,13 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         return (void*)1;
     }
     //setup parameters
-  #ifdef __ANDROID__
     dircat(entParam->hxo_dir, androidParam->AndroidDataPath, confparam->hxo_dir);
     char new_hxo_dir[512];
     dircat(new_hxo_dir, androidParam->rootDataPath, "cache/hxo/");
-  #else
-    dircat(entParam->hxo_dir, entParam->ini_dir, confparam->hxo_dir);
-  #endif
     //Add a slash to avoid directory issues
     fixDIR(entParam->hxo_dir);
+    fixDIR(new_hxo_dir);
+    
 
   #ifndef CPRS_SHOW_ALWAYS
     if(!confparam->hideBanner)
@@ -324,14 +256,14 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         fprintf(stderr, "[X] ERROR: Can't open hxo directory \"%s\".\n", confparam->hxo_dir);
         free(entParam);
         free(confparam);
-      #ifdef __ANDROID__
+    #ifdef __ANDROID__
         free(androidParam);
-      #endif
-      #ifdef _DEBUG_LOG
+    #endif
+    #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
         close(out_fd);
-      #endif
+    #endif
         return (void*)1;
     }
 
@@ -365,19 +297,25 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     //folder: /data/data/<APP_ID>/tmp/hxo/
     if (mkdir(new_hxo_dir, 0777) == -1)
     {
-      if(errno != EEXIST)
-      {
-          free(confparam);
-          free(entParam);
-          free(androidParam);
-    // exit
+        if(errno != EEXIST)
+        {
+            fprintf(stderr, "[X] Can't create directory: %s", new_hxo_dir)
+            // free allocated memory
+            for (int i = 0; i < count; i++)
+            {
+                free(files[i]);
+            }            
+            free(confparam);
+            free(entParam);
+            free(androidParam);
+        // exit
         #ifdef _DEBUG_LOG
-          fflush(stdout);
-          fflush(stderr);
-          close(out_fd);
+            fflush(stdout);
+            fflush(stderr);
+            close(out_fd);
         #endif
-          return (void*)0;
-      }
+            return (void*)1;
+        }
     }
 
     char new_filename[2048];
@@ -385,7 +323,24 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     {
         dircat(current_filename, entParam->hxo_dir, files[i]);
         dircat(new_filename, new_hxo_dir, files[i]);
-        CopyFile(current_filename, new_filename);
+        if(CopyFile(current_filename, new_filename))
+        {
+            // free allocated memory
+            for (int i = 0; i < count; i++)
+            {
+                free(files[i]);
+            }            
+            free(confparam);
+            free(entParam);
+            free(androidParam);
+        // exit
+        #ifdef _DEBUG_LOG
+            fflush(stdout);
+            fflush(stderr);
+            close(out_fd);
+        #endif
+            return (void*)1;
+        }
     }
     strcpy(entParam->hxo_dir, new_hxo_dir);
   #endif //__ANDROID__
@@ -434,8 +389,6 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
 
     
     // free allocated memory
-
-    // strings
     for (int i = 0; i < count; i++)
     {
         free(files[i]);
@@ -446,6 +399,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         free(androidParam);
       #endif
     // exit
+    //free buffers and handles
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
@@ -578,32 +532,41 @@ int __attribute__((visibility("hidden"))) LogOutput()
 }
 #endif
 
-int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *destination_file)
-{
+int __attribute__((visibility("hidden"))) CopyFile(const char *source_file, const char *destination_file) {
     FILE *source = fopen(source_file, "rb");
     if (source == NULL) {
-        fprintf(stderr, "CopyFile failed: Could not open source file\n");
+        fprintf(stderr, "CopyFile failed: Could not open source file '%s'\n", source_file);
         return 1;
     }
 
     FILE *destination = fopen(destination_file, "wb");
     if (destination == NULL) {
-        fprintf(stderr, "CopyFile failed: Could not open destination file\n");
+        fprintf(stderr, "CopyFile failed: Could not open destination file '%s'\n", destination_file);
         fclose(source);
         return 1;
     }
 
-    char *buffer = malloc((size_t)ftell(source));
+    char buffer[1024];
     size_t bytes_read;
 
-    while ((bytes_read = fread(buffer, 1, 1024, source)) > 0) {
-        fwrite(buffer, 1, bytes_read, destination);
+    while ((bytes_read = fread(buffer, 1, sizeof(buffer), source)) > 0) {
+        if (fwrite(buffer, 1, bytes_read, destination) != bytes_read) {
+            fprintf(stderr, "CopyFile failed: Error writing to destination file '%s'\n", destination_file);
+            fclose(source);
+            fclose(destination);
+            return 1;
+        }
+    }
+
+    if (ferror(source)) {
+        fprintf(stderr, "CopyFile failed: Error reading from source file '%s'\n", source_file);
+        fclose(source);
+        fclose(destination);
+        return 1;
     }
 
     fclose(source);
     fclose(destination);
-
-    free(buffer);
 
     return 0;
 }
