@@ -266,6 +266,10 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     }
     if(!getAppID(confparam->hxo_dir))
     {
+      #ifdef _DEBUG_LOG
+        fclose(stderr);
+        fclose(stdout);
+      #endif
         return (void*)1;
     }
   #endif //__ANDROID__
@@ -277,6 +281,10 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     {
         free(entParam);
         free(confparam);
+      #ifdef _DEBUG_LOG
+        fclose(stderr);
+        fclose(stdout);
+      #endif
         return (void*)1;
     }
     //setup parameters
@@ -303,6 +311,10 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         fprintf(stderr, "[X] ERROR: Can't open hxo directory \"%s\".\n", confparam->hxo_dir);
         free(entParam);
         free(confparam);
+      #ifdef _DEBUG_LOG
+        fclose(stderr);
+        fclose(stdout);
+      #endif
         return (void*)1;
     }
 
@@ -384,6 +396,10 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     free(confparam);
     free(entParam);
     // exit
+      #ifdef _DEBUG_LOG
+        fclose(stderr);
+        fclose(stdout);
+      #endif
     return (void*)0;
 }
 
@@ -474,26 +490,26 @@ int __attribute__((visibility("hidden"))) LogOutput()
     strcpy(LogDir, "/data/data/");
     strcat(LogDir, _debugAppID);
     fixDIR(LogDir);
+    strcpy(stdoutLogFile, LogDir);
+    strcpy(stdoutLogFile, LogDir);
+    
     strcat(stdoutLogFile, "hxo_outlog.txt");
     strcat(stderrLogFile, "hxo_errlog.txt");
     
-    if ( !freopen(stdoutLogFile, "w", stderr) &&
-        !freopen(stderrLogFile, "w", stdout) )
+    if ( !freopen(stdoutLogFile, "a", stdout) &&
+        !freopen(stderrLogFile, "a", stderr) )
     {
         return 1;
     }
 
-    // Get the current time
-    time_t current_time;
-    time(&current_time);
+    // // Get the current time
+    // time_t current_time;
+    // time(&current_time);
 
-    // Convert to local time format
-    struct tm *local_time = localtime(&current_time);
+    // // Convert to local time format
+    // struct tm *local_time = localtime(&current_time);
     
-    printf("\n\n\n------->START LOG (%s)<----------\n\n", asctime(local_time));
-    perror("lol lol");
-    fclose(stderr);
-    fclose(stdout);
+    printf("\n\n\n------->START LOG<----------\n\n");
     return 0;
 }
 #endif
