@@ -504,7 +504,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
     
     strcat(stdoutLogFile, "hxo_log.txt");
     strcat(stderrLogFile, "hxo_log.txt");
-    /*
+    
     if ( !freopen(stdoutLogFile, "a", stderr) &&
         !freopen(stderrLogFile, "a", stdout) )
     {
@@ -517,8 +517,10 @@ int __attribute__((visibility("hidden"))) LogOutput()
 
     // // Convert to local time format
     // struct tm *local_time = localtime(&current_time);
-    */
-
+    printf("This is a normal message.\n");
+    fprintf(stderr, "This is an error message.\n");
+    printf("\n\n\n------->START LOG<----------\n\n");
+   /*
     int out_fd = open(stdoutLogFile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
     if (out_fd == -1) {
@@ -543,7 +545,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
     printf("\n\n\n------->START LOG<----------\n\n");
     // Close the original file descriptors
     close(out_fd);
-    
+    */
     return 0;
 }
 #endif
