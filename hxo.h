@@ -229,12 +229,20 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
             #ifdef _DEBUG_LOG
                 fflush(stdout);
                 fflush(stderr);
-                close(out_fd);
+                if(!out_fd) {
+                    close(out_fd);
+                }
             #endif
                 return (void*)1;
             }
         } else {
-            printf("[!+] Directory not found, created one: %s", androidParam->AndroidDataPath);
+            if(!out_fd)
+            {
+                out_fd = LogOutput();
+                fflush(stdout);
+                fflush(stderr);
+            }
+            printf("[!+] Directory not found, created one: %s\n", androidParam->AndroidDataPath);
         }
     }
 
@@ -535,7 +543,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
     if ( !freopen(outLogFile, "a", stdout) &&
         !freopen(outLogFile, "a", stderr) )
     {
-        return 1;
+        return 0;
     }
     */
 
@@ -544,18 +552,18 @@ int __attribute__((visibility("hidden"))) LogOutput()
 
     if (out_fd == -1) {
         perror("Failed to open file");
-        return 1;
+        return 0;
     }
 
     // Duplicate the file descriptor to stdout and stderr
     if (dup2(out_fd, STDOUT_FILENO) == -1) {
         perror("Failed to redirect stdout");
-        return 1;
+        return 0;
     }
 
     if (dup2(out_fd, STDERR_FILENO) == -1) {
         perror("Failed to redirect stderr");
-        return 1;
+        return 0;
     }
 
     printf("\n\n\n---------->START LOG<----------\n\n");
