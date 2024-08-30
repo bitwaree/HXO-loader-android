@@ -10,7 +10,7 @@ PREFIX=/storage/emulated/0/hxo/
 VERSION := $(shell cat ../version)
 
 build:
-	@ $(CC) -c ../*.c -fPIC -DVER_STR=\"$(VERSION)\" -D__ANDROID__ $(FLAGS)
+	@ $(CC) -c ../*.c -fPIC -DVER_STR=\"$(VERSION)\"  $(FLAGS)
 	@ echo "CC *.c ->>> *.o"
 	@ $(CC) -s -o ./$(LIBNAME) *.o -shared $(LDFLAGS)
 	@ echo "LD *.o ->>> ./lib/$(LIBNAME)"

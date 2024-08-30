@@ -61,8 +61,22 @@ void __attribute__((visibility("hidden"))) dircat(char *absolute, char *parent, 
 #define MAX_LIBS 100
 #define FILE_EXT ".hxo"
 
+#define __ANDROID__
+
+#ifdef __ANDROID__
+  //In case of android
+  #define _DEBUG_LOG
+
+  int __attribute__((visibility("hidden"))) getAppID(char *_ID);
+  int __attribute__((visibility("hidden"))) LogOutput();
+  #define DEFAULT_LIB_DIR "/storage/emulated/0/hxo/"
+
+#else
+  //if not android
+  #define DEFAULT_LIB_DIR "/usr/lib"
+
+#endif //__ANDROID__
 #define DEFAULT_HXO_DIR "./scripts/"
-#define DEFAULT_LIB_DIR "/usr/lib"
 #define CONFIGFILE "HXO.ini"
 
 struct iniParam
@@ -79,7 +93,7 @@ struct iniParam
     bool hideCPRstring;   //Hide Copyright String
 };
 
-struct enternalParam
+struct internalParam
 {
     char exedir[2048];    //(Absolute path) Where elf executable stays
     char cwd[2048];       //(Absolute path) Where elf was executed
@@ -159,12 +173,16 @@ int __attribute__((visibility("hidden"))) fn_ini_handler(void *user, const char 
 
 void __attribute__((visibility("hidden"))) *hxo_loader()
 {
+  #ifdef _DEBUG_LOG
+    LogOutput();
+  #endif
+
   #ifdef CPRS_SHOW_ALWAYS
     fprintf(stdout, BANNER_STR, VER_STR);
     fprintf(stdout, LIC_STR);
   #endif
     //Read Config
-    struct enternalParam *entParam = malloc(sizeof(struct enternalParam));
+    struct internalParam *entParam = malloc(sizeof(struct internalParam));
     
     struct iniParam *confparam = malloc(sizeof(struct iniParam));
     confparam->Enable = 1;
@@ -176,7 +194,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     confparam->hideBanner = 0;
     confparam->hideCPRstring = 0;
 
-
+  #ifndef __ANDROID__
     // fetch current working directory
     if (getcwd(entParam->cwd, 2048) == NULL) 
     {
@@ -237,6 +255,20 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     {
         goto _exit_at_init;
     }
+  #else
+    //in case of android
+    strcpy(entParam->ini_dir, DEFAULT_LIB_DIR);
+    fixDIR(entParam->ini_dir);
+    dircat(entParam->iniFile, entParam->ini_dir, CONFIGFILE);
+    if(ini_parse(entParam->iniFile, fn_ini_handler, confparam) < 0)
+    {
+        perror("[!] WARNING: unable to parse \'HXO.ini\'");
+    }
+    if(!getAppID(confparam->hxo_dir))
+    {
+        return (void*)1;
+    }
+  #endif //__ANDROID__
 
   after_parsing:
 
@@ -407,3 +439,57 @@ void __attribute__((visibility("hidden"))) dircat(char *absolute, char *parent, 
         strcat(absolute, child);    //concat child
     }
 }
+
+#ifdef __ANDROID__
+int __attribute__((visibility("hidden"))) getAppID(char *_ID)
+{
+    // Open the /proc/self/cmdline file
+    FILE *f = fopen("/proc/self/cmdline", "r");
+    if (f == NULL) {
+        perror("Failed to open /proc/self/cmdline");
+        return 1;
+    }
+
+    // Read the content of the file
+    if (fgets(_ID, 512, f) != NULL) {
+        // The package name is stored at the start of the file
+    } else {
+        perror("Failed to read package name");
+        fclose(f);
+        return 1;
+    }
+
+    // Close the file
+    fclose(f);
+    return 0;
+}
+int __attribute__((visibility("hidden"))) LogOutput()
+{
+    char _debugAppID[512];
+    getAppID(_debugAppID);
+
+    char LogFile[2048];
+    strcpy(LogFile, "/data/data/");
+    strcat(LogFile, _debugAppID);
+    fixDIR(LogFile);
+    strcat(LogFile, "hxo_log.txt");
+    if ( !freopen(LogFile, "a", stderr) &&
+        !freopen(LogFile, "a", stdout) )
+    {
+        return 1;
+    }
+
+    // Get the current time
+    time_t current_time;
+    time(&current_time);
+
+    // Convert to local time format
+    struct tm *local_time = localtime(&current_time);
+    
+    fprintf(stdout, "\n\n\n------->START LOG (%s)<----------\n\n", asctime(local_time));
+    perror("lol lol");
+    fclose(stderr);
+    fclose(stdout);
+    return 0;
+}
+#endif
