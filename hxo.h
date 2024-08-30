@@ -288,7 +288,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
-        fclose(out_fd);
+        close(out_fd);
       #endif
         return (void*)1;
     }
@@ -319,7 +319,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
-        fclose(out_fd);
+        close(out_fd);
       #endif
         return (void*)1;
     }
@@ -405,7 +405,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
       #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
-        fclose(out_fd);
+        close(out_fd);
       #endif
     return (void*)0;
 }
