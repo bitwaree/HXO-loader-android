@@ -46,7 +46,6 @@ void __attribute__((visibility("hidden"))) *hxo_loader();
 int __attribute__((visibility("hidden"))) GetExePath(char *directory);
 void __attribute__((visibility("hidden"))) fixDIR(char *Dir);
 void __attribute__((visibility("hidden"))) dircat(char *absolute, char *parent, char *child);
-int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *destination_file);
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,6 +69,7 @@ int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *dest
 
 #ifdef __ANDROID__
     //In case of android
+    #define EXTRA_UTILS           //Includes extra codes to be used in this project
     #define _DEBUG_LOG            //Comment if you don't wanna store logs in a file
     #define _LOG_DIR "/storage/emulated/0/Android/data/"              //Where hxo_log.txt file will be stored
     #define DEFAULT_INI_DIR "/storage/emulated/0/hxo/"                //where HXO.ini will be stored
@@ -88,6 +88,12 @@ int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *dest
 
 #define DEFAULT_HXO_DIR "./scripts/"
 #define CONFIGFILE "HXO.ini"
+
+#ifdef EXTRA_UTILS
+int __attribute__((visibility("hidden"))) fileExists(const char *filepath);
+int __attribute__((visibility("hidden"))) dirExists(const char *path);
+int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *destination_file);
+#endif //EXTRA_UTILS
 
 struct iniParam
 {
@@ -229,6 +235,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
         return (void*)1;
     }
     //setup parameters
+    //HXO Priority of searching for 
     dircat(entParam->hxo_dir, androidParam->AndroidDataPath, confparam->hxo_dir);
     char new_hxo_dir[512];
     dircat(new_hxo_dir, androidParam->rootDataPath, "cache/hxo/");
@@ -532,6 +539,39 @@ int __attribute__((visibility("hidden"))) LogOutput()
 }
 #endif
 
+// #include <stdio.h>
+// #include <sys/stat.h>
+// #include <sys/types.h>
+#ifdef EXTRA_UTILS
+int __attribute__((visibility("hidden"))) directoryExists(const char *path) {
+    struct stat info;
+
+    // Use stat to get information about the path
+    if (stat(path, &info) != 0) {
+        // Error in accessing the path (e.g., it doesn't exist)
+        return 0;
+    } else if (info.st_mode & S_IFDIR) {
+        // S_IFDIR bit is set, meaning it's a directory
+        return 1;
+    } else {
+        // The path exists, but it's not a directory
+        return 0;
+    }
+}
+int __attribute__((visibility("hidden"))) fileExists(const char *filepath) {
+
+    // Use fopen to create a handle at path
+    FILE *fp = fopen(filepath, "r");
+    if (!fp) {
+        // Error in accessing the file (e.g., it doesn't exist)
+        return 0;
+    } else {
+        // The path exists, but it's not a directory
+        fclose(fp);
+        return 1;
+    }
+}
+
 int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *destination_file) {
     FILE *source = fopen(source_file, "rb");
     if (source == NULL) {
@@ -570,3 +610,5 @@ int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *dest
 
     return 0;
 }
+
+#endif //EXTRA_UTILS
