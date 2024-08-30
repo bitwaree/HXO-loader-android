@@ -468,14 +468,17 @@ int __attribute__((visibility("hidden"))) LogOutput()
     char _debugAppID[512];
     getAppID(_debugAppID);
 
-    char LogFile[2048];
-    strcpy(LogFile, "/data/data/");
-    strcat(LogFile, _debugAppID);
-    fixDIR(LogFile);
-    strcat(LogFile, "hxo_log.txt");
-
-    if ( !freopen(LogFile, "w", stderr) &&
-        !freopen(LogFile, "w", stdout) )
+    char LogDir[1024];
+    char stdoutLogFile[1024];
+    char stderrLogFile[1024];
+    strcpy(LogDir, "/data/data/");
+    strcat(LogDir, _debugAppID);
+    fixDIR(LogDir);
+    strcat(stdoutLogFile, "hxo_outlog.txt");
+    strcat(stderrLogFile, "hxo_errlog.txt");
+    
+    if ( !freopen(stdoutLogFile, "w", stderr) &&
+        !freopen(stderrLogFile, "w", stdout) )
     {
         return 1;
     }
