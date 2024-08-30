@@ -475,7 +475,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
     strcat(LogFile, "hxo_log.txt");
 
     if ( !freopen(LogFile, "w", stderr) &&
-        !freopen(LogFile, "a", stdout) )
+        !freopen(LogFile, "w", stdout) )
     {
         return 1;
     }
