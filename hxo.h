@@ -299,7 +299,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     {
         if(errno != EEXIST)
         {
-            fprintf(stderr, "[X] Can't create directory: %s", new_hxo_dir)
+            fprintf(stderr, "[X] Can't create directory: %s", new_hxo_dir);
             // free allocated memory
             for (int i = 0; i < count; i++)
             {
@@ -532,7 +532,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
 }
 #endif
 
-int __attribute__((visibility("hidden"))) CopyFile(const char *source_file, const char *destination_file) {
+int __attribute__((visibility("hidden"))) CopyFile(char *source_file, char *destination_file) {
     FILE *source = fopen(source_file, "rb");
     if (source == NULL) {
         fprintf(stderr, "CopyFile failed: Could not open source file '%s'\n", source_file);
