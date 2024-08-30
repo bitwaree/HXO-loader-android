@@ -183,7 +183,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     fixDIR(entParam->ini_dir);
     dircat(entParam->iniFile, entParam->ini_dir, CONFIGFILE);
     //Default parameters
-    if(!getAppID(androidParam->ID))
+    if(getAppID(androidParam->ID))
     {
         fprintf(stderr,"Unable to fetch ID...");
     #ifdef _DEBUG_LOG
