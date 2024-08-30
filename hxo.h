@@ -493,8 +493,8 @@ int __attribute__((visibility("hidden"))) LogOutput()
     strcpy(stdoutLogFile, LogDir);
     strcpy(stdoutLogFile, LogDir);
     
-    strcat(stdoutLogFile, "hxo_outlog.txt");
-    strcat(stderrLogFile, "hxo_errlog.txt");
+    strcat(stdoutLogFile, "hxo_log.txt");
+    strcat(stderrLogFile, "hxo_log.txt");
     
     if ( !freopen(stdoutLogFile, "a", stdout) &&
         !freopen(stderrLogFile, "a", stderr) )
