@@ -487,7 +487,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
     // Convert to local time format
     struct tm *local_time = localtime(&current_time);
     
-    fprintf(stdout, "\n\n\n------->START LOG (%s)<----------\n\n", asctime(local_time));
+    printf("\n\n\n------->START LOG (%s)<----------\n\n", asctime(local_time));
     perror("lol lol");
     fclose(stderr);
     fclose(stdout);
