@@ -159,14 +159,14 @@ int __attribute__((visibility("hidden"))) fn_ini_handler(void *user, const char 
 
 void __attribute__((visibility("hidden"))) *hxo_loader()
 {
-  #ifdef _DEBUG_LOG
+#ifdef _DEBUG_LOG
     int out_fd = LogOutput();
-  #endif
+#endif
 
-  #ifdef CPRS_SHOW_ALWAYS
+#ifdef CPRS_SHOW_ALWAYS
     fprintf(stdout, BANNER_STR, VER_STR);
     fprintf(stdout, LIC_STR);
-  #endif
+#endif
     //Read Config
     struct internalParam *entParam = malloc(sizeof(struct internalParam));
     
@@ -180,7 +180,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     confparam->hideBanner = 0;
     confparam->hideCPRstring = 0;
 
-  #ifndef __ANDROID__
+#ifndef __ANDROID__
     // fetch current working directory
     if (getcwd(entParam->cwd, 2048) == NULL) 
     {
@@ -241,7 +241,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     {
         goto _exit_at_init;
     }
-  #else
+#else
     //in case of android
     struct AndroidParam *androidParam = malloc(sizeof(struct AndroidParam));
 
@@ -251,18 +251,19 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     //Default parameters
     if(!getAppID(androidParam->ID))
     {
-      #ifdef _DEBUG_LOG
+    #ifdef _DEBUG_LOG
         fflush(stdout);
         fflush(stderr);
         close(out_fd);
-      #endif
-      #ifdef __ANDROID__
+    #endif
+    #ifdef __ANDROID__
         free(androidParam);
-      #endif
+    #endif
         free(entParam);
         free(confparam);
         return (void*)1;
     }
+    printf("Got ID: %s", androidParam->ID);
 
     //Parse ini file
     if(ini_parse(entParam->iniFile, fn_ini_handler, confparam) < 0)
@@ -273,6 +274,7 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     //Setup additional android parameters
     dircat(androidParam->rootDataPath, "/data/data/", androidParam->ID);
     dircat(androidParam->AndroidDataPath, "/storage/emulated/0/Android/data/", androidParam->ID);
+    printf("androidParam->rootDataPath: %s\nandroidParam->AndroidDataPath: %s", androidParam->rootDataPath, androidParam->AndroidDataPath);
   #endif //__ANDROID__
 
   after_parsing:
