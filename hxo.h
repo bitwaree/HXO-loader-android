@@ -489,7 +489,7 @@ int __attribute__((visibility("hidden"))) getAppID(char *_ID)
 }
 int __attribute__((visibility("hidden"))) LogOutput()
 {
-    /*
+    
     char _debugAppID[512];
     getAppID(_debugAppID);
 
@@ -500,11 +500,11 @@ int __attribute__((visibility("hidden"))) LogOutput()
     strcat(LogDir, _debugAppID);
     fixDIR(LogDir);
     strcpy(stdoutLogFile, LogDir);
-    strcpy(stdoutLogFile, LogDir);
+    strcpy(stderrLogFile, LogDir);
     
     strcat(stdoutLogFile, "hxo_log.txt");
     strcat(stderrLogFile, "hxo_log.txt");
-    
+    /*
     if ( !freopen(stdoutLogFile, "a", stderr) &&
         !freopen(stderrLogFile, "a", stdout) )
     {
@@ -518,7 +518,8 @@ int __attribute__((visibility("hidden"))) LogOutput()
     // // Convert to local time format
     // struct tm *local_time = localtime(&current_time);
     */
-    int out_fd = open("hxo_log.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+    int out_fd = open(stdoutLogFile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
     if (out_fd == -1) {
         perror("Failed to open file");
