@@ -71,10 +71,11 @@ void __attribute__((visibility("hidden"))) dircat(char *absolute, char *parent, 
     //In case of android
     #define EXTRA_UTILS           //Includes extra codes to be used in this project
     #define _DEBUG_LOG            //Comment if you don't wanna store logs in a file
-    #define _LOG_DIR "/storage/emulated/0/Android/data/"              //Where hxo_log.txt file will be stored
+    #define DEFAULT_ANDROID_APPPATH "/storage/emulated/0/Android/media/"        //Parent directory of <id>/scripts
+    #define _LOG_DIR DEFAULT_ANDROID_APPPATH                           //Where hxo_log.txt file will be stored
     #define DEFAULT_INI_DIR "/storage/emulated/0/hxo/"                //where HXO.ini will be stored
     #define DEFAULT_LIB_DIR "/storage/emulated/0/hxo/"                //Where hxo_loader.so is placed
-    #define PARENT_HXO_DIR "/storage/emulated/0/Android/data/"        //Parent directory of <id>/scripts
+    
     int __attribute__((visibility("hidden"))) getAppID(char *_ID);    //Fetches app id eg:<com.example.app>
     int __attribute__((visibility("hidden"))) LogOutput();            //Starts the logging
   
@@ -185,9 +186,6 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     //in case of android
     struct AndroidParam *androidParam = malloc(sizeof(struct AndroidParam));
 
-    strcpy(entParam->ini_dir, DEFAULT_INI_DIR);
-    fixDIR(entParam->ini_dir);
-    dircat(entParam->iniFile, entParam->ini_dir, CONFIGFILE);
     //Default parameters
     if(getAppID(androidParam->ID))
     {
@@ -206,17 +204,46 @@ void __attribute__((visibility("hidden"))) *hxo_loader()
     }
     printf("[+] Got ID: %s\n", androidParam->ID);
 
+    //Setup additional android parameters
+    dircat(androidParam->rootDataPath, "/data/data/", androidParam->ID);
+    dircat(androidParam->AndroidDataPath, DEFAULT_ANDROID_APPPATH, androidParam->ID);
+    printf("\nandroidParam->rootDataPath: %s\nandroidParam->AndroidDataPath: %s\n", androidParam->rootDataPath, androidParam->AndroidDataPath);
+    //Setting up parameters for loading HXO.ini
+    strcpy(entParam->ini_dir, androidParam->AndroidDataPath);
+    fixDIR(entParam->ini_dir);
+    dircat(entParam->iniFile, entParam->ini_dir, CONFIGFILE);
+    
+    
+    if(!dirExists(androidParam->AndroidDataPath))
+    {
+        if (mkdir(androidParam->AndroidDataPath, 0770) == -1)
+        {
+            if(errno != EEXIST)
+            {
+                fprintf(stderr, "[X] Can't create directory: %s\n", androidParam->AndroidDataPath);
+                // free allocated memory           
+                free(confparam);
+                free(entParam);
+                free(androidParam);
+            // exit
+            #ifdef _DEBUG_LOG
+                fflush(stdout);
+                fflush(stderr);
+                close(out_fd);
+            #endif
+                return (void*)1;
+            }
+        } else {
+            printf("[!+] Directory not found, created one: %s", androidParam->AndroidDataPath);
+        }
+    }
+
+
     //Parse ini file
     if(ini_parse(entParam->iniFile, fn_ini_handler, confparam) < 0)
     {
         perror("[!] WARNING: unable to parse \'HXO.ini\'");
     }
-
-    //Setup additional android parameters
-    dircat(androidParam->rootDataPath, "/data/data/", androidParam->ID);
-    dircat(androidParam->AndroidDataPath, "/storage/emulated/0/Android/data/", androidParam->ID);
-    printf("\nandroidParam->rootDataPath: %s\nandroidParam->AndroidDataPath: %s\n", androidParam->rootDataPath, androidParam->AndroidDataPath);
-
   after_parsing:
 
     //exit without ding anythig if config says to
@@ -543,7 +570,7 @@ int __attribute__((visibility("hidden"))) LogOutput()
 // #include <sys/stat.h>
 // #include <sys/types.h>
 #ifdef EXTRA_UTILS
-int __attribute__((visibility("hidden"))) directoryExists(const char *path) {
+int __attribute__((visibility("hidden"))) dirExists(const char *path) {
     struct stat info;
 
     // Use stat to get information about the path
