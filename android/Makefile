@@ -3,7 +3,7 @@
 #Run "make help" for help statement
 #Checkout README.md for more info
 CC=gcc
-LIBNAME=hxo_loader.so
+LIBNAME=libhxo.so
 CCFLAGS=
 LDFLAGS=
 PREFIX=/storage/emulated/0/hxo/
